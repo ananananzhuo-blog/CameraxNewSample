@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#ffffffff"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_bottomdialog_takepic"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:paddingLeft="14dp"
+        android:paddingTop="4dp"
+        android:paddingRight="14dp"
+        android:textColor="#000"
+        android:paddingBottom="4dp"
+        android:text="拍照" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:background="#ABABCA" />
+
+    <TextView
+        android:id="@+id/tv_bottomdialog_selectpic"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:paddingLeft="14dp"
+        android:textColor="#000"
+        android:paddingTop="4dp"
+        android:paddingRight="14dp"
+        android:paddingBottom="4dp"
+        android:text="相册选择" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:background="#ABABCA" />
+
+    <TextView
+        android:id="@+id/tv_bottomdialog_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:paddingLeft="14dp"
+        android:textColor="#000"
+        android:paddingTop="4dp"
+        android:paddingRight="14dp"
+        android:paddingBottom="15dp"
+        android:text="取消" />
+</LinearLayout>

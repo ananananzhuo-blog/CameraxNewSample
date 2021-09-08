@@ -1,0 +1,25 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+participant 开始活体识别 as Detection
+participant 活体识别页面 as FaceDetectionActivity
+participant 相机 as Camera
+participant 控制器 as FaceController
+participant 任务 as Task
+participant 网络容器 as Upload
+
+Detection -> FaceDetectionActivity : detection进入活体识别页面
+FaceDetectionActivity -> Camera : openCamera打开相机
+Camera -->FaceDetectionActivity : 打开相机成功
+FaceDetectionActivity -> FaceController : 开始识别
+FaceController->FaceController:遍历任务
+FaceController->FaceController:轮训执行任务
+FaceController -> Upload:upload 上传动作
+Upload -> FaceController : 上传完成回调结果
+FaceController-->FaceDetectionActivity:成功或失败都执行下一个动作
+FaceDetectionActivity-->FaceDetectionActivity:执行完全部动作，失败页面按钮点击重试
+FaceDetectionActivity-->Detection:成功，回调的方式返回结果
+
+
+@enduml

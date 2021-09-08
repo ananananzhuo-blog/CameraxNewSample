@@ -1,0 +1,129 @@
+package com.broaddeep.face
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Size
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import com.broaddeep.face.utils.BitmapUtils
+import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.*
+import java.io.File
+import java.lang.Runnable
+import java.util.concurrent.Executors
+
+/**
+ *   @name mayong
+ *   @date 2021/9/7 - 10:59
+ *   @describe 方形取景框的控制器
+ */
+class ScanCardController {
+    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+    private lateinit var imageCapture: ImageCapture
+    fun openCamera(
+        context: Context,
+        previewView: PreviewView
+    ) {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(context)//获得provider实例
+        val imageAnalysis = ImageAnalysis.Builder()
+            .setTargetResolution(Size(previewView.measuredWidth, previewView.measuredHeight))
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+        cameraProviderFuture.addListener(Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            bindPreview(context, cameraProvider, imageAnalysis, previewView)
+        }, ContextCompat.getMainExecutor(context))
+
+    }
+
+    fun takePic(context: Context,scope:CoroutineScope, cropHeight: Float, previewWidth: Float, previewHeight: Float,callback:(path:String)->Unit) {
+        var file = File(context.getExternalFilesDir(""), "File")
+        if (!file.exists()) {
+            file.mkdirs()
+        }
+        val photoFile = File(file, "${System.currentTimeMillis()}.jpg")
+        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(photoFile)
+            .build()//构建输出选项
+        var cameraExecutor = Executors.newSingleThreadExecutor()
+        //点击拍照
+        imageCapture.takePicture(outputFileOptions, cameraExecutor,
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(error: ImageCaptureException) {
+                    error.printStackTrace()
+                }
+
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    scope.launch {
+                        val bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+                        val xScale =
+                            (bitmap.height * previewWidth / previewHeight) / bitmap.width//拍照的时候相机预览的宽度是高于PreviewView的宽度，所以这里要计算一个虚拟的preview宽度
+                        val cropBitmap =
+                            getCropBitmap(bitmap, xScale, cropHeight / previewHeight)
+                        photoFile.delete()
+                        val savePath =
+                            context.getExternalFilesDir("")?.absolutePath + File.separator + "temppic"
+                        val path =BitmapUtils.saveImageToGallery(
+                            cropBitmap,
+                            savePath,
+                            "${System.currentTimeMillis()}.jpg"
+                        )
+                        callback.invoke(path)
+                    }
+                }
+            })
+    }
+
+    private suspend fun getCropBitmap(bitmap: Bitmap, wScale: Float, hScale: Float): Bitmap =
+        withContext(Dispatchers.IO) {
+
+            val width = bitmap.width * wScale
+            val height = bitmap.height * hScale
+            val x = (bitmap.width - width) / 2
+            val y = (bitmap.height - height) / 2
+            val cropBitmap =
+                Bitmap.createBitmap(bitmap, x.toInt(), y.toInt(), width.toInt(), height.toInt())
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
+            cropBitmap
+        }
+    lateinit var cameraProvider:ProcessCameraProvider
+    /**
+     * 绑定预览view
+     */
+    private fun bindPreview(
+        context: Context,
+        cameraProvider: ProcessCameraProvider,
+        imageAnalysis: ImageAnalysis,
+        previewView: PreviewView
+    ) {
+        this.cameraProvider=cameraProvider
+        val preview: Preview = Preview.Builder()
+            .build()
+        val cameraSelector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+            .build()
+        preview.setSurfaceProvider(previewView.surfaceProvider)
+        imageCapture = ImageCapture.Builder()
+            .setTargetRotation(previewView.display.rotation)
+            .build()
+
+        var camera = cameraProvider.bindToLifecycle(
+            context as LifecycleOwner,
+            cameraSelector,
+            imageCapture,
+            imageAnalysis,
+            preview
+        )
+    }
+
+    @SuppressLint("RestrictedApi")
+    fun shutDown(){
+       cameraProvider.shutdown()
+    }
+}
