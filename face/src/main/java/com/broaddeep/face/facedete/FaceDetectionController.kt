@@ -11,13 +11,21 @@ class FaceDetectionController {
         taskList.addAll(tasks)
     }
 
-    fun detection(path: String,callback:(result:String)->Unit) {
+   suspend fun detection(path: String,callback:(isSucc:Boolean,result:String)->Unit) {
         if (taskList.isEmpty()) {
             logE("未初始化任务列表")
             return
         }
         currentTask = taskList[index]
-        currentTask?.detection(path)
+        currentTask?.detection(path){isSucc, result ->
+            if(isSucc){
+                index++
+                callback.invoke(isSucc,result)
+            }else{
+                index++
+                callback.invoke(isSucc,result)
+            }
+        }
     }
 
 }

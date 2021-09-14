@@ -49,8 +49,9 @@ class FaceController {
                     )//将image转化为bitmap，参考：https://github.com/android/camera-samples/blob/3730442b49189f76a1083a98f3acf3f5f09222a3/CameraUtils/lib/src/main/java/com/example/android/camera/utils/YuvToRgbConverter.kt
                 }
                 val path =BitmapUtils.saveImageToGallery(bitmap,"${context.getExternalFilesDir("")}${File.separator}detectionPic","${System.currentTimeMillis()}.jpg")
-                faceDetectionController.detection(path)
-                image.close()//这里调用了close就会继续生成下一帧图片
+                faceDetectionController.detection(path){isSucc, result ->
+                    image.close()//这里调用了close就会继续生成下一帧图片
+                }
             }
 
         })

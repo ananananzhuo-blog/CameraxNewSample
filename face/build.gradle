@@ -61,7 +61,7 @@ dependencies {
     compileOnly "com.squareup.okhttp3:okhttp:4.1.0"
     compileOnly "com.squareup.okhttp3:logging-interceptor:4.1.0"
 
-    implementation "android.core:core-framework:2.2.34"
-    implementation "android.core:core-stat:2.1.5"
+//    implementation "android.core:core-framework:2.2.34"
+//    implementation "android.core:core-stat:2.1.5"
 //    implementation 'androidx.activity:activity-ktx:1.3.0'
 }

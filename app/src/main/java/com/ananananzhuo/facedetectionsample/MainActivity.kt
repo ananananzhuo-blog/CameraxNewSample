@@ -67,8 +67,10 @@ class MainActivity : CustomAdapterActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        CardUtils.onActivityResult(requestCode,resultCode,data)
-
+        val path = CardUtils.onActivityResult(requestCode, resultCode, data)
+        startActivity(Intent(this,ImageShowActivity::class.java).apply {
+            putExtra("path1",path)
+        })
     }
 
 }

@@ -2,19 +2,28 @@ package com.broaddeep.face
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
+import android.os.Build
 import android.util.Size
+import androidx.annotation.RequiresApi
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.broaddeep.face.activity.ImageShowActivity
 import com.broaddeep.face.utils.BitmapUtils
+import com.broaddeep.face.utils.logE
+import com.example.android.camera.utils.YuvToRgbConverter
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.lang.Runnable
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 /**
@@ -41,7 +50,7 @@ class ScanCardController {
 
     }
 
-    fun takePic(context: Context,scope:CoroutineScope, cropHeight: Float, previewWidth: Float, previewHeight: Float,callback:(path:String)->Unit) {
+    fun takePicToFile(context: Context, scope:CoroutineScope, cropHeight: Float, previewWidth: Float, previewHeight: Float, callback:(path:String)->Unit) {
         var file = File(context.getExternalFilesDir(""), "File")
         if (!file.exists()) {
             file.mkdirs()
@@ -78,9 +87,54 @@ class ScanCardController {
             })
     }
 
+    fun  takePicToMemory(context: Context, scope: CoroutineScope, callback:(path:String)->Unit){
+        var file = File(context.getExternalFilesDir(""), "File")
+        if (!file.exists()) {
+            file.mkdirs()
+        }
+//        val photoFile = File(file, "${System.currentTimeMillis()}.jpg")
+        var cameraExecutor = Executors.newSingleThreadExecutor()
+        imageCapture.setCropAspectRatio()
+        imageCapture.takePicture(cameraExecutor,object : ImageCapture.OnImageCapturedCallback() {
+            @RequiresApi(Build.VERSION_CODES.N)
+            @SuppressLint("UnsafeOptInUsageError")
+            override fun onCaptureSuccess(image: ImageProxy) {
+                super.onCaptureSuccess(image)
+                scope.launch (Dispatchers.IO){
+                    // 将 imageProxy 转为 byte数组
+                    val buffer: ByteBuffer = image.planes[0].buffer
+                    // 新建指定长度数组
+                    val byteArray = ByteArray(buffer.remaining())
+                    // 倒带到起始位置 0
+                    buffer.rewind()
+                    // 数据复制到数组, 这个 byteArray 包含有 exif 相关信息，
+                    // 由于 bitmap 对象不会包含 exif 信息，所以转为 bitmap 需要注意保存 exif 信息
+                    buffer.get(byteArray)
+                    // 获取照片 Exif 信息
+//                    val byteArrayInputStream = ByteArrayInputStream(byteArray)
+//                    val orientation = ExifInterface(byteArrayInputStream)
+
+                    var bitmap = BitmapFactory.decodeByteArray(byteArray,0,byteArray.size)
+                    bitmap=BitmapUtils.rotate(bitmap,image.imageInfo.rotationDegrees.toFloat())
+                    val savedPath = BitmapUtils.saveImageToGallery(
+                        bitmap,
+                        file.absolutePath,
+                        "${System.currentTimeMillis()}.jpg"
+                    )
+                    withContext(Dispatchers.Main){
+                        callback.invoke(savedPath)
+
+                    }
+
+                    image.close()
+
+                }
+            }
+
+        })
+    }
     private suspend fun getCropBitmap(bitmap: Bitmap, wScale: Float, hScale: Float): Bitmap =
         withContext(Dispatchers.IO) {
-
             val width = bitmap.width * wScale
             val height = bitmap.height * hScale
             val x = (bitmap.width - width) / 2
@@ -112,7 +166,7 @@ class ScanCardController {
         imageCapture = ImageCapture.Builder()
             .setTargetRotation(previewView.display.rotation)
             .build()
-
+        logE("previewView.display.rotation${previewView.display.rotation}")
         var camera = cameraProvider.bindToLifecycle(
             context as LifecycleOwner,
             cameraSelector,

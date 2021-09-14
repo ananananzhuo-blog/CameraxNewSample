@@ -3,10 +3,10 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "http://192.168.205.11:8282/repository/public/"
-            setAllowInsecureProtocol(true)
-        }
+//        maven {
+//            url "http://192.168.205.11:8282/repository/public/"
+//            setAllowInsecureProtocol(true)
+//        }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:7.0.1"

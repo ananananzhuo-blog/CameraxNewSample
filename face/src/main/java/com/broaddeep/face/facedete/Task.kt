@@ -10,10 +10,14 @@ class Task(action:Action) {
     /**
      * 活体识别单个任务
      */
-    fun detection(path: String,callback:(result:String)->Unit) {
-
+    suspend fun detection(path: String,callback:(isSucc:Boolean,result:String)->Unit) {
+        // TODO: 2021/9/8 上传逻辑
+        callback.invoke(true,"识别成功")
+//        callback.invoke(true,"识别失败")
     }
 }
+
+
 
 enum class Action(type: Int, desc: String) {
     //	1-张嘴  2-眨眼  3-左转头  4-右转头  5-低头 6-抬头
